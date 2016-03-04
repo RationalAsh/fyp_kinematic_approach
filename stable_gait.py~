@@ -1,0 +1,56 @@
+#!/usr/bin/python
+
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+
+
+#All the parameters
+w, l, d, h = 1.0, 1.618, 0.05, 0.2
+#l = [1.0]*9
+l1, l2, l3, l4 = 1.0, 1.0, 1.0, 1.0
+l5, l6, l7, l8 = 1.0, 1.0, 1.0, 1.0
+m = [3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+th0 = [0.]*9
+
+def T10(th):
+    return np.array([d - 0.5*l + 0.5*l1*np.sin(th[1]),
+                     -d - 0.5*w,
+                     -0.5*l1*np.cos(th[1])])
+
+def T20(th):
+    return np.array([d - 0.5*l + l1*np.sin(th[1]) + 0.5*l2*np.sin(th[1]+th[2]),
+                     -d - 0.5*w,
+                     -l1*np.cos(th[1]) - 0.5*l2*np.cos(th[1]+th[2])])
+
+def T30(th):
+    return np.array([d - 0.5*l - 0.5*l3*np.sin(th[3]),
+                     d + 0.5*w,
+                     -0.5*l3*np.cos(th[3])])
+
+def T40(th):
+    return np.array([d - 0.5*l - l3*np.sin(th[3]) - 0.5*l4*np.sin(th[3]+th[4]), 
+                     d + 0.5*w,
+                     -l3*np.cos(th[1]) - 0.5*l4*np.cos(th[3]+th[4])])
+
+def T50(th):
+    return np.array([-d + 0.5*l - 0.5*l5*np.sin(th[5]),
+                     d + 0.5*w,
+                     -0.5*l5*np.cos(th[5])])
+
+def T60(th):
+    return np.array([-d + 0.5*l - l5*np.sin(th[5]) - 0.5*l6*np.sin(th[5]+th[6]), 
+                     d + 0.5*w,
+                     -l5*np.cos(th[5]) - 0.5*l6*np.cos(th[5]+th[6])])
+
+def T70(th):
+   return np.array([-d + 0.5*l + 0.5*l7*np.sin(th[7]),
+                     -d - 0.5*w,
+                     -0.5*l7*np.cos(th[7])])
+
+def T80(th):
+    return np.array([-d + 0.5*l + l7*np.sin(th[7]) + 0.5*l8*np.sin(th[7]+th[8]), 
+                     -d - 0.5*w,
+                     -l7*np.cos(th[7]) - 0.5*l8*np.cos(th[7]+th[8])])
+
+

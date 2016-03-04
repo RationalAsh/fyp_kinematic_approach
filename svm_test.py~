@@ -1,0 +1,7 @@
+#!/usr/bin/bash
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+#Define the dataset matrix 
+X = np.zeros((1000, 2))

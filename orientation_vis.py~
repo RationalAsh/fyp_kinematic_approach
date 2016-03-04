@@ -1,0 +1,27 @@
+#!/usr/bin/python
+
+#Orientation visualization using quaternions
+#From the DMP6 onboard the GY521
+
+from visual import *
+import numpy as np
+import serial
+from serial import SerialException
+import time
+
+PORT = '/dev/ttyUSB0'
+BAUD = 38400
+delay = 0.01
+
+ser = serial.Serial(PORT, BAUD)
+
+time.sleep(0.8)
+
+while True:
+    #Read the quaternions
+    quats = ser.readline().strip().split('\t')
+    try:
+        vals = [int(i) for i in sensor_vals]
+        print vals
+    except:
+        pass

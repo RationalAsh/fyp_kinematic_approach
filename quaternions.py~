@@ -1,0 +1,15 @@
+#!/usr/bin/python
+
+'''This is a quaternions library that I am developing
+on my own for my final year project. It's targeted at
+people who want to use quaternions for spatial rotations.'''
+
+import numpy as np
+
+
+class quat(object):
+    def __init__(self, q=np.array()):
+        self.q = np.array([0., 0., 0., 0.])
+
+    def __add__:
+        
