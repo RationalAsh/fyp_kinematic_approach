@@ -4,14 +4,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 from quaternions import *
 from numpy.linalg import norm, inv
+import time
 #from visual import *
 
 MAX_A = 2*9.81
-MAX_G = 250*np.pi/180.0
+MAX_G = 250.0*np.pi/180.0
 #Parameters for visualization
 L, W, H = 1.618, 1.0, 0.2
+DT = 0.003
 
-def F(x, dt=0.01):
+def trap_step(w_c, w_p, dt=DT):
+    return (w_c + w_p)*DT/(2)
+
+def F(x, dt=DT):
     '''Function that defines the non-linear State transition
     takes x_k and returns x_k+1'''
     #The quaternion
@@ -24,12 +29,15 @@ def F(x, dt=0.01):
     if norm(wk) != 0:
         e_delta = wk/norm(wk)
         q_delta = axis_angle2quat(e_delta, a_delta)
+        #if(wk[2]>0.1):
+        #    print(q_delta)
         #Calculate q_new
         q_new = qmul(qk, q_delta)
     elif norm(wk) == 0:
         #Calculate q_new
         q_new = qk    
 
+    #print(str(q_new.shape)+ str(wk.shape))
     #Return the new state vector
     return np.hstack((q_new, wk))
 
@@ -43,7 +51,7 @@ def H(x):
 
     #Handle the accelerometer model
     g = np.array([0.,0.,0.,-MAX_A/2])
-    g_obs = qrot(g,qk)
+    g_obs = qrot(g,qinv(qk))
 
     return np.hstack((g_obs, wk))
 
@@ -107,11 +115,11 @@ def compute_xi(wi, xk):
 DATA = np.loadtxt('sample_data.txt', delimiter='\t')
 #Convert to SI units
 DATA[:,:3] = DATA[:,:3]*-MAX_A/32786.0
-DATA[:,3:] = DATA[:,3:]*MAX_G/32786.0
+DATA[:,3:6] = DATA[:,3:6]*MAX_G/32786.0
 
 #Get calibration data
-CAL_DATA = DATA[:3000,:]
-X = DATA[1000:,:]
+CAL_DATA = DATA[:450,:6]
+X = DATA[1000:,:6]
 
 #Find the mean and use this to offset the rest of the data
 m = np.mean(CAL_DATA, axis=0)
@@ -142,7 +150,7 @@ plt.show()
 #We'll be working with X for the filter
 #First set the initial values
 xk = np.array([1.,0.,0.,0.,0.,0.,0.])
-Pk = 0.1*np.identity(6)
+Pk = np.identity(6)
 Q = 0.1*np.identity(6)
 R = C
 
@@ -161,25 +169,45 @@ ctr = 0
 #The box that represents the body of the quadruped
 #bod = box(pos=(0,0,0), length=L, width=W, height=H, axis=(0,-1,0), up=(0,0,1))#, color=(0,1,0))
 #qdisplay = label(pos = (-2,0.8,0), xoffset=1, text='Quaternion', height=10, border=6, font='sans')
+#Open file to store the data
+f = open('ukfiltered_data.txt', 'w+')
 
+zrot = 0.
+wz_prev = 0
+t = 0
+#t_prev = DATA[1000,6]
 
 #Better implementation
 for i in range(len(X)):
+    st_time = time.time()
     #Get the most recent measurement
     z_k = X[i,:]
+
+    #Estimating the yaw
+    #t = DATA[i+1000,6]
+    wk = xk[4:]
+    qk = xk[:4]
+    wz = np.dot(qrot([0,0,1], qk), wk)
+    #zrot = zrot + (wz+wz_prev)*(t - t_prev)/2000
+    zrot = zrot + (wz+wz_prev)*(DT)/2
+    qwz = np.array([np.cos(0.5*zrot),0,0,np.sin(0.5*zrot)])
+
+    wz_prev = wz
+    #t_prev = t
 
     #Compute the set Wi of disturbances in state vectors
     S = np.linalg.cholesky(Pk + Q)
     Wi = np.hstack((np.sqrt(2.0*Pk.shape[0])*S, -np.sqrt(2.0*Pk.shape[0])*S)).T
 
     #Compute the set Xi of disturbed state vectors
-    for i in range(len(Wi)):
-        wi = Wi[i,:]        
-        Xi[i,:] = compute_xi(wi, xk)    
+    for j in range(len(Wi)):
+        wi = Wi[j,:]        
+        Xi[j,:] = compute_xi(wi, xk)    
 
     #Compute the set of transformed Sigma points
-    for i in range(len(Xi)):
-        Yi[i,:] = F(Xi[i,:])
+    for j in range(len(Xi)):
+        #print(F(Xi[j,:]).shape)
+        Yi[j,:] = F(Xi[j,:])
 
     #Compute the mean and variance of the transformed sigma points
     xk_ap, ebi = compute_mean(Yi)
@@ -188,8 +216,8 @@ for i in range(len(X)):
     Pk_ap = np.cov(Wpi, rowvar=0)
 
     #Find the set Zi of projected measurement vectors
-    for i in range(len(Xi)):
-        Zi[i,:] = H(Yi[i,:])
+    for j in range(len(Xi)):
+        Zi[j,:] = H(Yi[j,:])
     
     #Finding the measurement estimate covariance and mean
     zk_ap = np.mean(Zi, axis=0)
@@ -214,16 +242,18 @@ for i in range(len(X)):
     Pk = Pk_ap - np.dot(np.dot(Kk, Pvv), Kk.T)
     
     #Store it in an array
-    #kal_pose[i,:] = xk
-    print("Count"+str(ctr)+", angle: "+str(180*2.0*np.arccos(xk[0])/np.pi))
+    kal_pose[i,:] = xk
+    kal_pose[i,:4] = qmul(qwz, kal_pose[i,:4])
+    end_time = time.time()
 
-    #bod.axis = tuple(qrot([-L,0.,0.], xk))
-    #bod.up = tuple(qrot([0.,0.,1.], xk))
-    #qdisplay.text = 'Quaternion: '+str(xk)
-    #rate(100)
+    #print(end_time - st_time)
+    print("Count: "+str(ctr)+", angle: "+str(180*2*np.arccos(kal_pose[i,0])/np.pi))
+    f.write(str(kal_pose[i,0])+','+str(kal_pose[i,1])+','+str(kal_pose[i,2])+','+str(kal_pose[i,3])+'\n')
 
     ctr += 1
     #print(ctr)
+f.close()
+
 
 # #Naive implementation
 # for i in range(len(X)):

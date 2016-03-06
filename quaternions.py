@@ -24,6 +24,15 @@ def quat2axis_angle(q):
     ax = np.array(q[1:])/k
     return ax, angle
 
+def quat2euler(q):
+    qw, qx, qy, qz = q
+    
+    roll = np.arctan2(2*qw*qx+2*qy*qz , 1 - 2*qx**2 - 2*qy**2)
+    pitch = np.arcsin(2*qw*qy + 2*qz*qx) 
+    yaw = np.arctan2(2*qw*qz+2*qx*qy , 1 - 2*qy**2 - 2*qz**2)
+    
+    return np.array([yaw, pitch, roll])
+
 def qmul(q1, q2):
     '''Takes quaternions of the form 
     w + xi + yj + zk represented as
