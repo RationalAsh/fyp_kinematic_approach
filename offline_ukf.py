@@ -252,47 +252,6 @@ for i in range(len(X)):
 
     ctr += 1
     #print(ctr)
+
+#Close the file
 f.close()
-
-
-# #Naive implementation
-# for i in range(len(X)):
-#     row = X[i,:]
-#     S = np.linalg.cholesky(Pk + Q)
-#     Wi = np.hstack((np.sqrt(2.0*Pk.shape[0])*S,-np.sqrt(2.0*Pk.shape[0])*S)).T
-#     Xi = np.tile(xk, (Wi.shape[0],1)) + Wi 
-
-#     for i in range(len(Xi)):
-#         Yi[i,:] = F(Xi[i,:])
-
-#     xk_ap = np.mean(Yi,axis=0)
-#     Pk_ap = np.cov(Yi, rowvar=0)
-
-#     for i in range(len(Xi)):
-#         Zi[i,:] = H(Xi[i,:])
-
-#     zk_ap = np.mean(Zi, axis=0)
-#     Pzz = np.cov(Zi, rowvar=0)
-#     Pvv = Pzz + R
-
-#     Pxz = np.dot((Yi - np.tile(xk_ap, (Yi.shape[0], 1))).T, Zi - np.tile(zk_ap, (Zi.shape[0], 1)))
-
-#     Kk = np.dot(Pxz, inv(Pvv))
-#     vk = row - zk_ap
-#     x_k = xk_ap + np.dot(Kk, vk)
-#     kal_pose[i,:] = x_k
-#     Pk = Pk_ap - np.dot(np.dot(Kk, Pvv), Kk.T)
-
-
-
-#Kalman filter loop
-#for row in X:
-    #Cholesky decompose P + Q
-#    S = np.linalg.cholesky(P0 + Q)
-#    W = np.hstack((np.sqrt(2.0*P0.shape[0])*S,-np.sqrt(2.0*P0.shape[0])*S)).T
-
-    
-    
-
-
-
